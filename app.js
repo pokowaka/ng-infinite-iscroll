@@ -6,7 +6,7 @@
 'use strict';
 
 angular.module('myApp', [
-'ngRoute', 'ngSanitize', 'ngTouch', 'ngAnimate',		//additional angular modules
+'ngRoute',  'ngTouch',		//additional angular modules
 'pokowaka.ng-infinite-iscroll'
 ]).
 config(['$routeProvider', '$locationProvider', '$compileProvider', function($routeProvider, $locationProvider, $compileProvider) {
@@ -26,7 +26,6 @@ config(['$routeProvider', '$locationProvider', '$compileProvider', function($rou
 	
 	
 	$routeProvider.when(appPathRoute+'home', {templateUrl: pagesPath+'home/home.html'});
-
 	$routeProvider.otherwise({redirectTo: appPathRoute+'home'});
 	
 }]);

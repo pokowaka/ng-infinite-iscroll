@@ -2,26 +2,27 @@
 <html lang="en" ng-app="myApp">
 <head>
     <meta charset="utf-8">
-
     <title>ng-infinite-iscroll</title>
+    <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet">
+    <link href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css" rel="stylesheet">
+	  <link rel="stylesheet" href="main.css"/>
 
-	<link rel="stylesheet" href="main.css"/>
-
+    <!-- Custom styles for this template -->
+    <link href="http://getbootstrap.com/examples/cover/cover.css" rel="stylesheet">
 </head>
-<body>
-	<div ng-view></div>
 
+<body>
+	<div class="site-wrapper" ng-view></div>
+
+  <script src="//code.jquery.com/jquery-1.11.0.min.js"></script>
+  <script src="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js"></script>
 	<script type="text/javascript" src="bower_components/angular/angular.min.js"></script>
 	<script type="text/javascript" src="bower_components/angular-route/angular-route.min.js"></script>
-	<script type="text/javascript" src="bower_components/angular-sanitize/angular-sanitize.min.js"></script>
 	<script type="text/javascript" src="bower_components/angular-touch/angular-touch.min.js"></script>
-	<script type="text/javascript" src="bower_components/angular-animate/angular-animate.min.js"></script>
-	
+	<script type="text/javascript" src="iscroll-large.js"></script>
 	<script type="text/javascript" src="nite-iscroll.js"></script>
 	<!--<script type="text/javascript" src="nite-iscroll.min.js"></script>-->
-	
 	<script type="text/javascript" src="app.js"></script>
-	
 	<script type="text/javascript" src="pages/home/HomeCtrl.js"></script>
 </body>
 </html>

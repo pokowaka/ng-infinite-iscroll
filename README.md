@@ -1,13 +1,44 @@
-# An fast scroller directive for very large sets of data.
+# A fast scroller directive for very large sets of data.
 
-[TODO - brief summary]
+Scrolling large sets using AngularJS that actually work on mobile devices can be quite a challenge! What this directive allows you to do is to create a scroll view over a large set of data by only requesting a window of the data that is actually visible.
+
+This directive only adds a minimal amount of elements to the DOM so it works well on mobile devices. 
+
+This directive here is based on iScroll which was slighly modified. iScroll is built into this directive due to the changes that have been made to it. 
+
+## Usage
+
+You can use it as follows in your view:
+
+`<infinite-list request-data="getData" row-template="'<p>The item: {{item}}</p>'" /> 
+`
+
+Now in your controller you need a function that fetches the data:
+
+```javascript
+
+ $scope.getData = function(offset, size) {
+    var def = $q.defer();
+    // This is the actual data format we need to return..
+    var data = { total : 10000, items : [] };
+    for(var i = offset; i < Math.min(offset + size, 10000); i++) {
+          data.items.push('Element: ' + i);
+    }
+    def.resolve(data);
+    return def.promise;
+  };
+```
+
+You can also use `row-template-url` if your template is stored in a file somewhere. 
+
+***Note! Your template should have a fixed height! Otherwise the scroller will not work!*** 
 
 ## Demo
 http://pokowaka.github.io/ng-infinite-iscroll/
 
 ## Dependencies
 - required:
-	[TODO]
+  iScroll needs jQuery, so that will be pulled in.
 - optional
 	[TODO]
 

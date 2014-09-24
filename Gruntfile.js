@@ -84,7 +84,7 @@ module.exports = function(grunt) {
 				},
 				build: {
 					files:  {},
-					src:    'nite-iscroll.js',
+					src:    ['iscroll-large.js', 'nite-iscroll.js'],
 					dest:   'nite-iscroll.min.js'
 				}
 			},

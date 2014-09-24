@@ -1,3 +1,76 @@
-<div ng-controller='HomeCtrl'>	
-	<!-- TODO: place directive call here -->
+
+<div class="site-wrapper-inner" ng-controller='HomeCtrl' >
+  <div class="cover-container">
+    <div class="masthead clearfix">
+      <div class="inner">
+        <h3 class="masthead-brand">A directive for scrolling large sets of data.</h3>
+      </div>
+    </div>
+
+    <div class="inner cover">
+      <h1 class="cover-heading">Let's scroll {{total}} elements..
+            <small ng-show='loading'>
+              Loading
+              <i  class="fa fa-spinner fa-spin"></i>
+            </small>
+      </h1>
+      <p >
+      Below you see you a list of {{total}} elements. Each time when the cached display set is out of
+      reach a call will be made retrieve more data. (Currently we simulate a 2 second timeout and return a set).
+      </p>
+
+      <!-- And here you have the directive in action -->
+      <!-- Make sure to put it inside a fixed height & width, otherwise it will not work properly -->
+      <!-- Not setting position to relative  causes weirdness with the scrollbars -->
+      <div style="position: relative; width: 300px; height: 300px"> 
+
+        <!-- Notice the ' around the template! -->
+        <infinite-list request-data="getData" row-template="'<p>The item: {{item}}</p>'" /> 
+      </div>
+    </div>
+
+    <div class="mastfoot">
+      <div class="inner">
+        <p>Happy Scrolling!</p>
+      </div>
+    </div>
+
+  </div>
+
 </div>
+
+<!-- 
+    
+<div class="site-wrapper" >	
+
+
+  <div class="site-wrapper-inner">
+
+    <div class="cover-container">
+
+      <div class="masthead clearfix">
+        <div class="inner">
+          <h3 class="masthead-brand">Let's scroll {{total}} elements!
+            <small>
+              <i ng-show='loading' class="fa fa-spinner fa-spin"></i>
+
+            </small>
+          </h3>
+        </div>
+      </div>
+
+      <div class="inner cover">
+      </div>
+
+      <div class="mastfoot">
+        <div class="inner">
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+-->
+
