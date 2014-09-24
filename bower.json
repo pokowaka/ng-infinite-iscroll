@@ -1,12 +1,11 @@
 {
-	"name": "ng-infinite-iscroll",
-	"version": "1.0.0",
+	"name": "ng-infinite-iscroll-demo",
+	"version": "0.0.0",
 	"authors": [
 		"Erwin Jansen <pokowaka@gmail.com>"
 	],
-	"description": "An fast scroller directive for very large sets of data.",
+	"description": "Demo",
 	"keywords": [
-		"infinite-scroll"
 	],
 	"license": "MIT",
 	"ignore": [
@@ -20,7 +19,8 @@
 		"angular":"~1.2.0",
 		"angular-animate":"~1.2.0",
 		"angular-sanitize":"~1.2.0",
-		"angular-touch":"~1.2.0"
+		"angular-touch":"~1.2.0",
+		"angular-route":"~1.2.0"
 	},
 	"devDependencies": {
 	}
