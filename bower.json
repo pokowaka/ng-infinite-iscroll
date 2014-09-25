@@ -4,24 +4,24 @@
   "authors": [
     "Erwin Jansen <pokowaka@gmail.com>"
   ],
-  "description": "A very fast infinite scroller directive based upon iScroll that works well on mobile devices. ",
-  "keywords": [
-  ],
+  "description": "A very fast infinite scroller directive based upon iScroll that works well on mobile devices.",
   "license": "MIT",
-  "main": [
-    "nite-iscroll.min.css",
-    "nite-iscroll.min.js"
-  ],
+  "main": "nite-iscroll.css, nite-iscroll.js",
   "ignore": [
     "**/.*",
     "node_modules",
     "bower_components",
     "test",
-    "tests"
+    "tests",
+    "lib"
   ],
   "dependencies": {
-    "angular":"~1.2.0"
+    "angular": "~1.2.0"
   },
-  "devDependencies": {
-  }
+  "homepage": "https://github.com/pokowaka/ng-infinite-iscroll",
+  "private": true,
+  "keywords": [
+    "scroll",
+    "infinite"
+  ]
 }
