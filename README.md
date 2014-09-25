@@ -30,6 +30,7 @@ Now in your controller you need a function that fetches the data:
 ```
 
 You can also use `row-template-url` if your template is stored in a file somewhere. 
+You can pass in iScroll options using the options attribute. 
 
 ***Note! Your template should have a fixed height! Otherwise the scroller will not work!*** 
 
