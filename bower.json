@@ -6,7 +6,10 @@
   ],
   "description": "A very fast infinite scroller directive based upon iScroll that works well on mobile devices.",
   "license": "MIT",
-  "main": "nite-iscroll.css, nite-iscroll.js",
+  "main":  [
+    "nite-iscroll.css",
+    "nite-iscroll.js"
+  ],
   "ignore": [
     "**/.*",
     "node_modules",
