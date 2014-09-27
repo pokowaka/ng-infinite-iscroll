@@ -1,8 +1,10 @@
 # A fast scroller directive for very large sets of data.
 
 Scrolling large sets using AngularJS that actually work on mobile devices can be quite a challenge! What this directive allows you to do is to create a scroll view over a large set of data by only requesting a window of the data that is actually visible.
+It also contains a directive that allows you to group the data in
+headers. See the demo for an example of the two directives.
 
-This directive only adds a minimal amount of elements to the DOM so it works well on mobile devices. 
+This directive only adds a minimal amount of elements to the DOM so it works well on mobile devices.
 
 This directive here is based on iScroll which was slighly modified. iScroll is built into this directive due to the changes that have been made to it. 
 

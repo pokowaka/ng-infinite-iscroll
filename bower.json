@@ -4,7 +4,7 @@
   "authors": [
     "Erwin Jansen <pokowaka@gmail.com>"
   ],
-  "description": "A very fast infinite scroller directive based upon iScroll that works well on mobile devices.",
+  "description": "A very fast scroller for large datasets directive based upon iScroll that works well on mobile devices.",
   "license": "MIT",
   "main":  [
     "nite-iscroll.css",
