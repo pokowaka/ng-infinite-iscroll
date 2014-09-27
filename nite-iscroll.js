@@ -83,7 +83,7 @@ var utils = (function () {
   };
 
   me.prefixPointerEvent = function (pointerEvent) {
-    return window.MSPointerEvent ? 
+    return window.MSPointerEvent ?
       'MSPointer' + pointerEvent.charAt(9).toUpperCase() + pointerEvent.substr(10):
       pointerEvent;
   };
@@ -294,7 +294,7 @@ function IScroll (el, options) {
     resizeScrollbars: true,     infiniteUseTransform: true,
     deceleration: 0.004,
 
-// INSERT POINT: OPTIONS 
+// INSERT POINT: OPTIONS
 
     startX: 0,
     startY: 0,
@@ -351,14 +351,14 @@ if ( this.options.infiniteElements ) {
   this.options.infiniteUseTransform = this.options.infiniteUseTransform && this.options.useTransform;
   if ( this.options.shrinkScrollbars == 'scale' ) {
     this.options.useTransition = false;
-  }   
+  }
 
   if ( this.options.probeType == 3 ) {
     this.options.useTransition = false; }
 
 // INSERT POINT: NORMALIZATION
 
-  // Some defaults  
+  // Some defaults
   this.x = 0;
   this.y = 0;
   this.directionX = 0;
@@ -724,11 +724,15 @@ IScroll.prototype = {
     this.scrollerHeight = this.scroller.offsetHeight;
 
     this.maxScrollX   = this.wrapperWidth - this.scrollerWidth;
-    
+
     var limit;
     if ( this.options.infiniteElements ) {
       this.options.infiniteLimit = this.options.infiniteLimit || Math.floor(2147483645 / this.infiniteElementHeight);
       limit = -this.options.infiniteLimit * this.infiniteElementHeight + this.wrapperHeight;
+      // Add groupby headers if we have any..
+      if (this.groupBy) {
+        limit -= this.groupBy.length * this.infiniteHeaderHeight;
+      }
     }
     this.maxScrollY   = limit !== undefined ? limit : this.wrapperHeight - this.scrollerHeight;
 /* REPLACE END: refresh */
@@ -1567,7 +1571,7 @@ IScroll.prototype = {
       if ( now >= destTime ) {
         that.isAnimating = false;
         that._translate(destX, destY);
-        
+
         if ( !that.resetPosition(that.options.bounceTime) ) {
           that._execEvent('scrollEnd');
         }
@@ -1599,9 +1603,15 @@ IScroll.prototype = {
 
     this.infiniteElements = typeof el == 'string' ? document.querySelectorAll(el) : el;
     this.infiniteLength = this.infiniteElements.length;
-    this.infiniteMaster = this.infiniteElements[0];
-    this.infiniteElementHeight = this.infiniteMaster.offsetHeight;
-    this.infiniteHeight = this.infiniteLength * this.infiniteElementHeight;
+    this.infiniteElementHeight = this.infiniteElements[0].offsetHeight;
+
+    // We consider the first element to be a groupBy header if the heights are
+    // not matching..
+    if (this.options.groupBy) {
+      this.infiniteHeaderHeight = this.infiniteElements[0].offsetHeight;
+      this.infiniteElementHeight = this.infiniteElements[1].offsetHeight;
+      this.groupBy = this.options.groupBy;
+    }
 
     this.options.cacheSize = this.options.cacheSize || 1000;
     this.infiniteCacheBuffer = Math.round(this.options.cacheSize / 4);
@@ -1613,6 +1623,10 @@ IScroll.prototype = {
 
     this.on('refresh', function () {
       var elementsPerPage = Math.ceil(this.wrapperHeight / this.infiniteElementHeight);
+
+      // This variable contains the half the number of offscreen elements. (infinite.length are
+      // all the cached li elements. elements per page contains all the li's that are actually visible
+      // on screen.
       this.infiniteUpperBufferSize = Math.floor((this.infiniteLength - elementsPerPage) / 2);
       this.reorderInfinite();
     });
@@ -1620,33 +1634,119 @@ IScroll.prototype = {
     this.on('scroll', this.reorderInfinite);
   },
 
+  headerIndexOf :function(searchElement) {
+    if (this.groupBy === undefined)
+      return 0;
+
+    var minIndex = 0, maxIndex = this.groupBy.length - 1, currentIndex, currentElement, resultIndex;
+
+    while (minIndex <= maxIndex) {
+      resultIndex = currentIndex = (minIndex + maxIndex) / 2 | 0;
+      currentElement = this.groupBy[currentIndex].offset + currentIndex;
+
+      if (currentElement < searchElement) {
+        minIndex = currentIndex + 1;
+      }
+      else if (currentElement > searchElement) {
+        maxIndex = currentIndex - 1;
+      }
+      else {
+        return currentIndex;
+      }
+    }
+
+    return ~maxIndex;
+  },
+
+  translateElementToData: function(idx) {
+    var data = { type : 'row', data : undefined };
+    if (this.groupBy === undefined) {
+        data.data = this.infiniteCache[idx];
+        return data;
+    }
+
+    var i = this.headerIndexOf(idx);
+    if (i > 0 || idx == 0) {
+      return { type : 'header', data : this.groupBy[i].item };
+    } else {
+      return { type : 'row', data : this.infiniteCache ? this.infiniteCache[idx + i] : undefined, idx : idx + i };
+    }
+  },
+
+
+  // Given a Y coordinate, returns the element index in the large finite set.
+  translateYToIdx: function(y) {
+    if (this.groupBy === undefined) {
+       return Math.floor(-y / this.infiniteElementHeight);
+    }
+    if (y > 0) {
+      return -1;
+    }
+
+    // TODO(ErwinJ): Binary search!
+    for(var i = 0; i < this.groupBy.length; i++) {
+       var height = this.groupBy[i].offset * this.infiniteElementHeight + i * this.infiniteHeaderHeight;
+       if (-y <= height) {
+         return Math.floor((-y - i * this.infiniteHeaderHeight)/ this.infiniteElementHeight) + i;
+       }
+    }
+    // TODO(ErwinJ): Shouldn't happen!
+    return Math.floor((-y - this.groupBy.length * this.infiniteHeaderHeight)/ this.infiniteElementHeight) + this.groupBy.length;
+  },
+  translateIdxToY: function(idx) {
+    if (this.groupBy === undefined) {
+       return idx * this.infiniteElementHeight;
+    }
+    var i = Math.abs(this.headerIndexOf(idx));
+    return (idx - i) * this.infiniteElementHeight + i * this.infiniteHeaderHeight;
+  },
+
   // TO-DO: clean up the mess
   reorderInfinite: function () {
-    var center = -this.y + this.wrapperHeight / 2;
-
-    var minorPhase = Math.max(Math.floor(-this.y / this.infiniteElementHeight) - this.infiniteUpperBufferSize, 0),
+    // minorPhase is the lowest buffered element. So it should be the element with the lowest top.
+    // So in the case of multiple types this should be the last n such that \sum_{i=0}^{i=n} h(i)
+    // For example. If we scroll to y = -500, and elemheight = 10. We are showing element 50, - buffer size gives
+    // us the element with the lowest value that is visible.
+    var minorPhase = this.translateYToIdx(this.y) - this.infiniteUpperBufferSize,
       majorPhase = Math.floor(minorPhase / this.infiniteLength),
       phase = minorPhase - majorPhase * this.infiniteLength;
+
+
+      // Phase will have a value from [0,this.infiniteLength>
+      // and is used to push elements to the bottom.
 
     var top = 0;
     var i = 0;
     var update = [];
+    var maxPhase = this.options.infiniteLimit + (this.groupBy ? this.groupBy.length : 0);
 
-    //var cachePhase = Math.floor((minorPhase + this.infiniteLength / 2) / this.infiniteCacheBuffer);
-    var cachePhase = Math.floor(minorPhase / this.infiniteCacheBuffer);
+    var cachePhase = Math.floor( (minorPhase - Math.abs(this.headerIndexOf(minorPhase))) / this.infiniteCacheBuffer);
 
+    //console.log("y: " + this.y +  ", minorPhase: " + minorPhase + ", majorPhase: " + majorPhase + ", phase: " + phase + ", cachePhase: " + cachePhase + ', infLength: ' + this.infiniteLength);
     while ( i < this.infiniteLength ) {
-      top = i * this.infiniteElementHeight + majorPhase * this.infiniteHeight;
+      // Top contains the highest element..
+      //top = i * this.infiniteElementHeight +  majorPhase * this.infiniteHeight;
 
       if ( phase > i ) {
-        top += this.infiniteElementHeight * this.infiniteLength;
+        // Push this element to the end of visible spectrum
+        // this li will be moved to the end.
+        top = this.translateIdxToY(this.infiniteLength + i + majorPhase * this.infiniteLength);
+      } else {
+        top = this.translateIdxToY(i + majorPhase * this.infiniteLength);
       }
 
       if ( this.infiniteElements[i]._top !== top ) {
-        this.infiniteElements[i]._phase = top / this.infiniteElementHeight;
+        // _phase contains the index of the element to display.
+        var elm = this.translateYToIdx(-top);
+        this.infiniteElements[i]._phase = elm;
 
-        if ( this.infiniteElements[i]._phase < this.options.infiniteLimit ) {
+        if ( this.infiniteElements[i]._phase < maxPhase ) {
           this.infiniteElements[i]._top = top;
+
+          // TODO(ErwinJ): We can now determine what type of row we are displaying and 
+          // translate the proper row into position, that way we could do better caching
+          // and get better performance in the angular side of things..
+
           if ( this.options.infiniteUseTransform ) {
             this.infiniteElements[i].style[utils.style.transform] = 'translate(0, ' + top + 'px)' + this.translateZ;
           } else {
@@ -1679,11 +1779,12 @@ IScroll.prototype = {
     }
 
     for ( var i = 0, l = els.length; i < l; i++ ) {
-      this.options.dataFiller.call(this, els[i], this.infiniteCache[els[i]._phase]);
+      var obj = this.translateElementToData(els[i]._phase);
+      this.options.dataFiller.call(this, els[i], obj.data, obj.type);
     }
   },
 
-  updateCache: function (start, data) {
+  updateCache: function (start, data, groupBy) {
     var firstRun = this.infiniteCache === undefined;
 
     this.infiniteCache = {};
@@ -1692,13 +1793,16 @@ IScroll.prototype = {
       this.infiniteCache[start++] = data[i];
     }
 
+    if (groupBy !== undefined) {
+      this.groupBy = groupBy;
+    }
+
     this.infiniteCacheOffset = start;
     this.infiniteCacheLength = data.length;
 
     if ( firstRun ) {
       this.updateContent(this.infiniteElements);
     }
-
   },
 
 
@@ -2057,13 +2161,18 @@ Indicator.prototype = {
         this.maxBoundaryX = this.maxPosX;
       }
 
-      this.sizeRatioX = this.options.speedRatioX || (this.scroller.maxScrollX && (this.maxPosX / this.scroller.maxScrollX));  
+      this.sizeRatioX = this.options.speedRatioX || (this.scroller.maxScrollX && (this.maxPosX / this.scroller.maxScrollX));
     }
 
     if ( this.options.listenY ) {
       this.wrapperHeight = this.wrapper.clientHeight;
       var scrollerHeight = (this.scroller.options.infiniteLimit ?
                       (this.scroller.options.infiniteLimit * this.scroller.infiniteElementHeight) :  this.scroller.scrollerHeight);
+
+      // Add groupby headers if we have any..
+      if (this.scroller.options.infiniteLimit && this.scroller.groupBy) {
+        scrollerHeight += this.scroller.groupBy.length * this.scroller.infiniteHeaderHeight;
+      }
       if ( this.options.resize ) {
         this.indicatorHeight = Math.max(Math.round(this.wrapperHeight * this.wrapperHeight / (scrollerHeight || this.wrapperHeight || 1)), 8);
         this.indicatorStyle.height = this.indicatorHeight + 'px';
@@ -2204,6 +2313,210 @@ angular.module('pokowaka.ng-infinite-iscroll', []).
     return counter++;
   };
 })
+.directive('infiniteGroupByList', function($compile, $http, $q, $templateCache, counterService) {
+  return {
+    restrict: 'E',
+    template: '<div class="infinite-list-wrapper"><div class="infinite-list-scroller"></div></div>',
+    scope          : {
+      requestData    : '=requestData',
+      rowTemplate    : '=rowTemplate',
+      rowTemplateUrl : '=rowTemplateUrl',
+      headerTemplate    : '=headerTemplate',
+      headerTemplateUrl : '=headerTemplateUrl',
+      refresh        : '=refresh',
+      cacheSize      : '=cacheSize',
+      options        : '=options',
+    },
+    link: function link(scope, element) {
+      var cacheSize = angular.isUndefined(scope.cacheSize) ? 1000 : scope.cacheSize;
+      var iScroll = null, lstStart = 0, row = null, header = null;
+      var scopeMap = {};
+      var createRow = function(ul, type, data) {
+        var template = (type === 'header' ? header : row);
+        var id = 'llx-' + counterService.next(),
+        el = angular.element('<li class="llxrow" id="' + id + '"/>'),
+        newScope = scope.$new(true);
+
+        // Keep track of which row has which scope..
+        // (We need this as $(el).scope() doesn't work..
+        scopeMap[id] = { type : type, scope : newScope };
+
+        ul.append(el);
+        newScope.item = data;
+        template(newScope, function(cloned) {
+          el.append(cloned);
+        });
+
+        if (scope.$root.$$phase != '$apply' && scope.$root.$$phase != '$digest') {
+          newScope.$apply();
+        }
+      };
+
+      // iScroll will call this to actually render the data
+      var updateContent = function(el, data, type) {
+        var elem = angular.element(el), id = elem.attr('id'), sc = scopeMap[id];
+        if (sc.type !== type) {
+          // Boo! Need to replace the item in our cache.. 
+          var template = (type === 'header' ? header : row);
+          elem.empty();
+          sc.scope = scope.$new(true);
+          sc.type = type;
+          template(sc.scope, function(cloned) {
+            elem.append(cloned);
+          });
+        }
+
+        sc.scope.item = data;
+
+        // Apply as we are likely outside a digest cycle.
+        if (scope.$root.$$phase != '$apply' && scope.$root.$$phase != '$digest') {
+          sc.scope.$apply();
+        }
+      };
+
+      //  Contains the outstanding request, basically this is a queue of length one
+      //  if this thing is null, there are no active requests.
+      //  if a new request comes in we simply overwrite this var, and call ourselves
+      //  again if the outstanding request doesn't look like the on just completed.
+      var outstanding = null;
+
+      var requestData = function(start, count) {
+        // We use this to drop intermediate requests if there are any outstanding.
+        if (outstanding !== null) {
+            outstanding = {start : start, count : count };
+            return;
+        }
+        outstanding = {start : start, count : count };
+
+        lstStart = start;
+        scope.requestData(start, count).then(function(res) {
+          if (res.limits !== iScroll.options.infiniteLimit) {
+            iScroll.options.infiniteLimit = res.total;
+          }
+
+          iScroll.updateCache(start, res.items, res.groupBy);
+          iScroll.updateContent();
+          iScroll.refresh();
+
+          var old = outstanding;
+          outstanding = null;
+
+          // Check if there is a new outstanding request, if so process it.
+          if (old.start !== start || old.count !== count) {
+            requestData(old.start, old.count);
+          }
+        }, function() {
+          var old = outstanding;
+          outstanding = null;
+
+          // Check if there is a new outstanding request, if so process it.
+          if (old.start !== start || old.count !== count) {
+            requestData(old.start, old.count);
+          }
+        });
+      };
+
+
+      // Used to get the template ready.
+      var loadTemplate = function() {
+        var deferred = $q.defer();
+        if (!angular.isUndefined(scope.rowTemplate)) {
+          deferred.resolve($compile(scope.rowTemplate));
+        }
+        if (!angular.isUndefined(scope.rowTemplateUrl)) {
+          $http.get(scope.rowTemplateUrl, {cache: $templateCache}).success(function(html) {
+            deferred.resolve($compile(html));
+          }).error(function() {
+            deferred.reject();
+          });
+        }
+        return deferred.promise;
+      };
+
+      // Used to get the template ready.
+      var loadHeaderTemplate = function() {
+        var deferred = $q.defer();
+        if (!angular.isUndefined(scope.headerTemplate)) {
+          deferred.resolve($compile(scope.headerTemplate));
+        }
+        if (!angular.isUndefined(scope.headerTemplateUrl)) {
+          $http.get(scope.headerTemplateUrl, {cache: $templateCache}).success(function(html) {
+            deferred.resolve($compile(html));
+          }).error(function() {
+            deferred.reject();
+          });
+        }
+        return deferred.promise;
+      };
+
+
+      // Okay, we now load the first rows of data..
+      // as soon as we get this we can construct our iScroll component.
+      loadTemplate().then(function(template) {
+        row = template;
+        return loadHeaderTemplate();
+      }).then(function(template) {
+        header = template;
+        return scope.requestData(0, 20)
+      }).then(function(res) {
+          // We can now setup the IScroll component..
+          // First we need the initial visible elements.
+          // For now we will use 50 elements.
+          // TODO(ErwinJ): In the future be smart and do 3x the view or something like that.
+          var ul = angular.element("<ul/>");
+          var scroller = element.children().children();
+          scroller.append(ul);
+          createRow(ul, 'header');
+          for(var i = 0; i < res.items.length && i < 50; i++) {
+            createRow(ul, 'row', res.items[i]);
+          }
+          var scrollDiv = element.children();
+          scrollDiv.attr('id', 'wr-' +  counterService.next());
+
+          var scrolloptions = {
+            mouseWheel            : true,
+            scrollbars            : true,
+            interactiveScrollbars : true,
+          };
+          if (!angular.isUndefined(scope.options)) {
+              scrolloptions = angular.isString(scope.options) ? JSON.parse(scope.options) : scope.options;
+          }
+
+          scrolloptions.infiniteElements      = scroller.children().children(),
+          scrolloptions.infiniteLimit         = res.total,
+          scrolloptions.dataset               = requestData,
+          scrolloptions.dataFiller            = updateContent,
+          scrolloptions.cacheSize             = cacheSize,
+          scrolloptions.groupBy               = res.groupBy;
+          iScroll = new IScroll(scrollDiv[0], scrolloptions);
+
+          var inx = 0;
+          for(var i = 0; i < 4000; i ++) {
+            var idx = iScroll.translateYToIdx(-i);
+            var  y = iScroll.translateIdxToY(idx);
+            var idx2 = iScroll.translateYToIdx(-y);
+            if (idx !== idx2) {
+              console.log("boo i: " + i + ", y: " + y + ' at idx: ' + idx);
+            }
+            if (Math.abs(inx - idx) == 1) {
+              console.log(JSON.stringify(iScroll.translateElementToData(inx)));
+              inx++;
+            }
+          }
+
+          // Hookup refresh observers.
+          if (!angular.isUndefined(scope.refresh)) {
+            var lst = scope.refresh.split(',');
+            for(var j = 0; j < lst.length; j++) {
+              scope.$parent.$watch(lst[j].trim(), function() {
+                requestData(lstStart, cacheSize);
+              });
+            }
+          }
+        });
+    }
+  };
+})
 .directive('infiniteList', function($compile, $http, $q, $templateCache, counterService) {
   return {
     restrict: 'E',
@@ -2243,7 +2556,7 @@ angular.module('pokowaka.ng-infinite-iscroll', []).
 
       // iScroll will call this to actually render the data
       var updateContent = function(el, data) {
-        var id = $(el).attr('id'), sc = scopeMap[id];
+        var id = angular.element(el).attr('id'), sc = scopeMap[id];
         sc.item = data;
 
         // Apply as we are likely outside a digest cycle.
@@ -2362,3 +2675,4 @@ angular.module('pokowaka.ng-infinite-iscroll', []).
     }
   };
 });
+

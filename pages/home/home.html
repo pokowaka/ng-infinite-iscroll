@@ -15,16 +15,32 @@
   <!-- And here you have the directive in action -->
   <!-- Make sure to put it inside a fixed height & width, otherwise it will not work properly -->
   <!-- Not setting position to relative  causes weirdness with the scrollbars -->
-  <h3> Let's scroll {{total}} elements..
-    <small ng-show='loading'>
-      Loading
-      <i  class="fa fa-spinner fa-spin"></i>
-    </small>
-  </h3>
-  <div style="position: relative; width: 300px; height: 300px;"> 
+  <div class="row">
+    <div class="col-xs-6">
+      <h3> Let's scroll {{total}} elements..
+        <small ng-show='loading'>
+          Loading
+          <i  class="fa fa-spinner fa-spin"></i>
+        </small>
+      </h3>
+      <div style="position: relative; width: 150px; height: 300px;"> 
 
-    <!-- Notice the ' around the template! -->
-    <infinite-list request-data="getData" row-template="'<p>[{{item}}]</p>'" /> 
+        <!-- Notice the ' around the template! -->
+        <infinite-list request-data="getData" row-template="'<p>[{{item}}]</p>'" />
+      </div>
+    </div>
+    <div class="col-xs-6">
+      <h3> Let's scroll {{grtotal}} elements that have a grouping header.
+        <small ng-show='grloading'>
+          Loading
+          <i  class="fa fa-spinner fa-spin"></i>
+        </small>
+      </h3>
+      <div style="position: relative; width: 200px; height: 300px;"> 
+        <!-- Notice the ' around the template! -->
+         <infinite-group-by-list request-data="getGroupData" header-template="'<H1><b>{{item}}!</b></H1>'" row-template="'<p>[{{item}}]</p>'" />   
+      </div>
+    </div>
   </div>
 </div>
 
