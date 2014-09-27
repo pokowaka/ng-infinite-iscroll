@@ -1666,13 +1666,17 @@ IScroll.prototype = {
     }
 
     var i = this.headerIndexOf(idx);
-    if (i > 0 || idx == 0) {
+    if (i > 0 || (i == 0 && this.groupBy[i].offset == idx)) {
       return { type : 'header', data : this.groupBy[i].item };
     } else {
       return { type : 'row', data : this.infiniteCache ? this.infiniteCache[idx + i] : undefined, idx : idx + i };
     }
   },
 
+  isHeader: function(idx) {
+    var i = this.headerIndexOf(idx);
+    return i > 0 || (i == 0 && this.groupBy[i].offset == idx);
+  },
 
   // Given a Y coordinate, returns the element index in the large finite set.
   translateYToIdx: function(y) {
@@ -2466,6 +2470,8 @@ angular.module('pokowaka.ng-infinite-iscroll', []).
           var ul = angular.element("<ul/>");
           var scroller = element.children().children();
           scroller.append(ul);
+
+          //  Groupby headers..
           createRow(ul, 'header');
           for(var i = 0; i < res.items.length && i < 50; i++) {
             createRow(ul, 'row', res.items[i]);
@@ -2489,20 +2495,6 @@ angular.module('pokowaka.ng-infinite-iscroll', []).
           scrolloptions.cacheSize             = cacheSize,
           scrolloptions.groupBy               = res.groupBy;
           iScroll = new IScroll(scrollDiv[0], scrolloptions);
-
-          var inx = 0;
-          for(var i = 0; i < 4000; i ++) {
-            var idx = iScroll.translateYToIdx(-i);
-            var  y = iScroll.translateIdxToY(idx);
-            var idx2 = iScroll.translateYToIdx(-y);
-            if (idx !== idx2) {
-              console.log("boo i: " + i + ", y: " + y + ' at idx: ' + idx);
-            }
-            if (Math.abs(inx - idx) == 1) {
-              console.log(JSON.stringify(iScroll.translateElementToData(inx)));
-              inx++;
-            }
-          }
 
           // Hookup refresh observers.
           if (!angular.isUndefined(scope.refresh)) {
