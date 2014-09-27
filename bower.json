@@ -6,7 +6,7 @@
   ],
   "description": "A very fast scroller for large datasets directive based upon iScroll that works well on mobile devices.",
   "license": "MIT",
-  "main":  [
+  "main": [
     "nite-iscroll.css",
     "nite-iscroll.js"
   ],
@@ -22,7 +22,6 @@
     "angular": "~1.2.0"
   },
   "homepage": "https://github.com/pokowaka/ng-infinite-iscroll",
-  "private": true,
   "keywords": [
     "scroll",
     "infinite"

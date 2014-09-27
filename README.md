@@ -10,6 +10,7 @@ This directive here is based on iScroll which was slighly modified. iScroll is b
 
 ## Usage
 
+
 You can use it as follows in your view:
 
 `<infinite-list request-data="getData" row-template="'<p>The item: {{item}}</p>'" /> 
@@ -31,18 +32,32 @@ Now in your controller you need a function that fetches the data:
   };
 ```
 
+You must return a datatype that looks like this:
+
+```javascript
+{
+  total : [Integer],   // The total number of objects available that can be retrieved, this is not the length of the list of items below!
+  items : [Item]       // Objects in this batch. Your template will be asked to render indivudal items of this list
+
+}
+```
+
 You can also use `row-template-url` if your template is stored in a file somewhere. 
 
+
 ***Note! Your template should have a fixed height! Otherwise the scroller will not work!*** 
+
+
 
 ## Demo
 http://pokowaka.github.io/ng-infinite-iscroll/
 
 ## Dependencies
-- required:
-  iScroll needs jQuery, so that will be pulled in.
-- optional
-	[TODO]
+- required: Nothing.
+- optional:
+
+***Note this includes a heavily modified iScoll5, which was needed to get all this to work, if you are using iScroll5 in your app you might run into conflicts***
+	
 
 See `bower.json` and `index.html` in the `gh-pages` branch for a full list / more details
 
