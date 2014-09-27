@@ -1686,16 +1686,28 @@ IScroll.prototype = {
     if (y > 0) {
       return -1;
     }
+    var posy = -y;
+    var minIndex = 0, maxIndex = this.groupBy.length - 1, currentIndex, currentElement, resultIndex, currentHeight;
+    while (minIndex <= maxIndex) {
+      resultIndex = currentIndex = (minIndex + maxIndex) / 2 | 0;
+      currentElement = this.groupBy[currentIndex].offset;
+      currentHeight = currentElement * this.infiniteElementHeight + currentIndex * this.infiniteHeaderHeight;
 
-    // TODO(ErwinJ): Binary search!
-    for(var i = 0; i < this.groupBy.length; i++) {
-       var height = this.groupBy[i].offset * this.infiniteElementHeight + i * this.infiniteHeaderHeight;
-       if (-y <= height) {
-         return Math.floor((-y - i * this.infiniteHeaderHeight)/ this.infiniteElementHeight) + i;
-       }
+      if (currentHeight < posy) {
+        minIndex = currentIndex + 1;
+      }
+      else if (currentHeight > posy) {
+        maxIndex = currentIndex - 1;
+      }
+      else {
+        break;
+      }
     }
-    // TODO(ErwinJ): Shouldn't happen!
-    return Math.floor((-y - this.groupBy.length * this.infiniteHeaderHeight)/ this.infiniteElementHeight) + this.groupBy.length;
+
+    if (posy > currentHeight) {
+      currentIndex++;
+    }
+    return Math.floor((-y - currentIndex * this.infiniteHeaderHeight)/ this.infiniteElementHeight) + currentIndex;
   },
   translateIdxToY: function(idx) {
     if (this.groupBy === undefined) {
