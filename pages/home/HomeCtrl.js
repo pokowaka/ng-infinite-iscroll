@@ -4,7 +4,12 @@
 'use strict';
 
 angular.module('myApp').controller('HomeCtrl', function($scope, $timeout, $q) {
-	//TODO - put any directive code here
+  $scope.iscrollOptions = {
+		mouseWheel: true,
+    scrollbars: 'custom',
+    interactiveScrollbars: true,
+  };
+  //uu
   $scope.total = 500000;
   $scope.getData = function(offset, size) {
     // Set the loading flag so the ui shows something sensible.

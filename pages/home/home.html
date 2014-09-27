@@ -26,7 +26,7 @@
       <div style="position: relative; width: 150px; height: 300px;"> 
 
         <!-- Notice the ' around the template! -->
-        <infinite-list request-data="getData" row-template="'<p>[{{item}}]</p>'" />
+        <infinite-list request-data="getData" row-template="'<p>[{{item}}]</p>'" options="iscrollOptions" />
       </div>
     </div>
     <div class="col-xs-6">
@@ -38,7 +38,7 @@
       </h3>
       <div style="position: relative; width: 200px; height: 300px;"> 
         <!-- Notice the ' around the template! -->
-         <infinite-group-by-list request-data="getGroupData" header-template="'<H1><b>{{item}}!</b></H1>'" row-template="'<p>[{{item}}]</p>'" />   
+         <infinite-group-by-list request-data="getGroupData" header-template="'<H1><b>{{item}}!</b></H1>'" row-template="'<p>[{{item}}]</p>'" options="iscrollOptions" />   
       </div>
     </div>
   </div>

@@ -2332,6 +2332,13 @@ angular.module('pokowaka.ng-infinite-iscroll', []).
       options        : '=options',
     },
     link: function link(scope, element) {
+      var needsHack = false;
+      // Well, it turns out that the iOS webkit will not redraw the dom, even though
+      // we have been messing around with it. 
+      if( /iPhone|iPad|iPod/i.test(navigator.userAgent) ) {
+        needsHack = true;
+      }
+      
       var cacheSize = angular.isUndefined(scope.cacheSize) ? 1000 : scope.cacheSize;
       var iScroll = null, lstStart = 0, row = null, header = null;
       var scopeMap = {};
@@ -2401,6 +2408,16 @@ angular.module('pokowaka.ng-infinite-iscroll', []).
           iScroll.updateCache(start, res.items, res.groupBy);
           iScroll.updateContent();
           iScroll.refresh();
+
+          // Oh really?!? Webkit mobile you're not willing to redraw?
+          // (Just for fun set needsHack to false,
+          // connect to your iPad and use the safari developer console and see how the
+          // dom looks right, but your display does not
+          if (needsHack) {
+            // We will force you to update the dom!
+            element[0].removeChild(element[0].appendChild(document.createElement('style')));
+          } 
+
 
           var old = outstanding;
           outstanding = null;
@@ -2522,6 +2539,12 @@ angular.module('pokowaka.ng-infinite-iscroll', []).
       options        : '=options',
     },
     link: function link(scope, element) {
+      var needsHack = false;
+      // Well, it turns out that the iOS webkit will not redraw the dom, even though
+      // we have been messing around with it. 
+      if( /iPhone|iPad|iPod/i.test(navigator.userAgent) ) {
+        needsHack = true;
+      }
       var cacheSize = angular.isUndefined(scope.cacheSize) ? 1000 : scope.cacheSize;
       var iScroll = null, lstStart = 0, row = null;
       var scopeMap = {};
@@ -2581,6 +2604,14 @@ angular.module('pokowaka.ng-infinite-iscroll', []).
           iScroll.updateContent();
           iScroll.refresh();
 
+          // Oh really?!? Webkit mobile you're not willing to redraw?
+          // (Just for fun set needsHack to false,
+          // connect to your iPad and use the safari developer console and see how the
+          // dom looks right, but your display does not
+          if (needsHack) {
+            // We will force you to update the dom!
+            element[0].removeChild(element[0].appendChild(document.createElement('style')));
+          } 
           var old = outstanding;
           outstanding = null;
 
