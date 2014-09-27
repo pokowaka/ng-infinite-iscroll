@@ -1666,7 +1666,7 @@ IScroll.prototype = {
     }
 
     var i = this.headerIndexOf(idx);
-    if (i > 0 || (i == 0 && this.groupBy[i].offset == idx)) {
+    if (i > 0 || (i === 0 && this.groupBy[i].offset === idx)) {
       return { type : 'header', data : this.groupBy[i].item };
     } else {
       return { type : 'row', data : this.infiniteCache ? this.infiniteCache[idx + i] : undefined, idx : idx + i };
@@ -1675,7 +1675,7 @@ IScroll.prototype = {
 
   isHeader: function(idx) {
     var i = this.headerIndexOf(idx);
-    return i > 0 || (i == 0 && this.groupBy[i].offset == idx);
+    return i > 0 || (i === 0 && this.groupBy[i].offset === idx);
   },
 
   // Given a Y coordinate, returns the element index in the large finite set.
@@ -2478,7 +2478,7 @@ angular.module('pokowaka.ng-infinite-iscroll', []).
         return loadHeaderTemplate();
       }).then(function(template) {
         header = template;
-        return scope.requestData(0, 20)
+        return scope.requestData(0, 20);
       }).then(function(res) {
           // We can now setup the IScroll component..
           // First we need the initial visible elements.
@@ -2680,7 +2680,7 @@ angular.module('pokowaka.ng-infinite-iscroll', []).
           scrolloptions.infiniteLimit         = res.total,
           scrolloptions.dataset               = requestData,
           scrolloptions.dataFiller            = updateContent,
-          scrolloptions.cacheSize             = cacheSize,
+          scrolloptions.cacheSize             = cacheSize;
           iScroll = new IScroll(scrollDiv[0], scrolloptions);
 
 
