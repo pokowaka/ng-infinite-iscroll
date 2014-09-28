@@ -10,8 +10,11 @@ This directive here is based on iScroll which was slighly modified. iScroll is b
 
 You can use it as follows in your view:
 
-`<infinite-list request-data="getData" row-template="'<p>The item: {{item}}</p>'" />
-`
+```html
+ <infinite-list 
+        request-data="getData" 
+        row-template="'<p>The item: {{item}}</p>'" />
+```
 
 Now in your controller you need a function that fetches the data:
 
@@ -42,7 +45,10 @@ You can pass in iScroll options using the options attribute. For
 example:
 
 ```html
-<infinite-list request-data="getSetData" row-template="'<p>[{{item}}]</p>'" options="iscrollOptions" refresh="'set.size, set.order'"  />
+<infinite-list request-data="getSetData" 
+               row-template="'<p>[{{item}}]</p>'" 
+               options="iscrollOptions" 
+               refresh="'set.size, set.order'"  />
 ```
 
 
