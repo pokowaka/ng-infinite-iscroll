@@ -102,7 +102,6 @@ http://pokowaka.github.io/ng-infinite-iscroll/
 
 ## Dependencies
 - required:
-  iScroll needs jQuery, so that will be pulled in.
 - optional
 	[TODO]
 
