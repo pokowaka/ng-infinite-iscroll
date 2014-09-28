@@ -1731,35 +1731,38 @@ IScroll.prototype = {
       // Phase will have a value from [0,this.infiniteLength>
       // and is used to push elements to the bottom.
 
-    var top = 0;
-    var i = 0;
+    var top = 0, i = 0, idx;
     var update = [];
-    var maxPhase = this.options.infiniteLimit + (this.groupBy ? this.groupBy.length : 0);
 
+    var maxPhase = this.options.infiniteLimit + (this.groupBy ? this.groupBy.length : 0);
     var cachePhase = Math.floor( (minorPhase - Math.abs(this.headerIndexOf(minorPhase))) / this.infiniteCacheBuffer);
 
     //console.log("y: " + this.y +  ", minorPhase: " + minorPhase + ", majorPhase: " + majorPhase + ", phase: " + phase + ", cachePhase: " + cachePhase + ', infLength: ' + this.infiniteLength);
     while ( i < this.infiniteLength ) {
       // Top contains the highest element..
       //top = i * this.infiniteElementHeight +  majorPhase * this.infiniteHeight;
+      idx = i + majorPhase * this.infiniteLength;
 
+      // Check if this element is out of reach, and should just be moved offscreen..
       if ( phase > i ) {
         // Push this element to the end of visible spectrum
         // this li will be moved to the end.
-        top = this.translateIdxToY(this.infiniteLength + i + majorPhase * this.infiniteLength);
-      } else {
-        top = this.translateIdxToY(i + majorPhase * this.infiniteLength);
+        idx += this.infiniteLength;
       }
+      // Wow, this idx is clearly out of range, push it offscreen..
+      if (idx >= maxPhase) {
+        idx = -idx;
+      }
+      top = this.translateIdxToY(idx);
 
       if ( this.infiniteElements[i]._top !== top ) {
         // _phase contains the index of the element to display.
-        var elm = this.translateYToIdx(-top);
-        this.infiniteElements[i]._phase = elm;
+        this.infiniteElements[i]._phase = idx;
 
         if ( this.infiniteElements[i]._phase < maxPhase ) {
           this.infiniteElements[i]._top = top;
 
-          // TODO(ErwinJ): We can now determine what type of row we are displaying and 
+          // TODO(ErwinJ): We can now determine what type of row we are displaying and
           // translate the proper row into position, that way we could do better caching
           // and get better performance in the angular side of things..
 
@@ -2329,31 +2332,32 @@ angular.module('pokowaka.ng-infinite-iscroll', []).
     return counter++;
   };
 })
-.directive('infiniteGroupByList', function($compile, $http, $q, $templateCache, counterService) {
+.directive('infiniteList', function($compile, $http, $q, $templateCache, counterService) {
   return {
     restrict: 'E',
     template: '<div class="infinite-list-wrapper"><div class="infinite-list-scroller"></div></div>',
     scope          : {
-      requestData    : '=requestData',
-      rowTemplate    : '=rowTemplate',
-      rowTemplateUrl : '=rowTemplateUrl',
+      requestData       : '=requestData',
+      rowTemplate       : '=rowTemplate',
+      rowTemplateUrl    : '=rowTemplateUrl',
       headerTemplate    : '=headerTemplate',
       headerTemplateUrl : '=headerTemplateUrl',
-      refresh        : '=refresh',
-      cacheSize      : '=cacheSize',
-      options        : '=options',
+      refresh           : '=refresh',
+      cacheSize         : '=cacheSize',
+      options           : '=options',
     },
     link: function link(scope, element) {
       var needsHack = false;
       // Well, it turns out that the iOS webkit will not redraw the dom, even though
-      // we have been messing around with it. 
+      // we have been messing around with it.
       if( /iPhone|iPad|iPod/i.test(navigator.userAgent) ) {
         needsHack = true;
       }
-      
+
       var cacheSize = angular.isUndefined(scope.cacheSize) ? 1000 : scope.cacheSize;
       var iScroll = null, lstStart = 0, row = null, header = null;
       var scopeMap = {};
+
       var createRow = function(ul, type, data) {
         var template = (type === 'header' ? header : row);
         var id = 'llx-' + counterService.next(),
@@ -2378,8 +2382,10 @@ angular.module('pokowaka.ng-infinite-iscroll', []).
       // iScroll will call this to actually render the data
       var updateContent = function(el, data, type) {
         var elem = angular.element(el), id = elem.attr('id'), sc = scopeMap[id];
+
         if (sc.type !== type) {
-          // Boo! Need to replace the item in our cache.. 
+          // Cache miss!
+          // Boo! Need to replace the item in our cache..
           var template = (type === 'header' ? header : row);
           elem.empty();
           sc.scope = scope.$new(true);
@@ -2413,13 +2419,19 @@ angular.module('pokowaka.ng-infinite-iscroll', []).
 
         lstStart = start;
         scope.requestData(start, count).then(function(res) {
-          if (res.limits !== iScroll.options.infiniteLimit) {
-            iScroll.options.infiniteLimit = res.total;
+          iScroll.updateCache(res.limits.begin, res.items, res.groupBy);
+          if (res.limits.total !== iScroll.options.infiniteLimit) {
+            iScroll.options.infiniteLimit = res.limits.total;
+            // We need to refresh twice due to an iScroll issue.
+            // iScroll.y does not get updated until the end of the refresh call.
+            // iScroll.y changes since the number of elements changes.
+            // by that point all the content has been recalculated already.
+            iScroll.refresh();
           }
 
-          iScroll.updateCache(start, res.items, res.groupBy);
-          iScroll.updateContent();
           iScroll.refresh();
+          iScroll.updateContent();
+
 
           // Oh really?!? Webkit mobile you're not willing to redraw?
           // (Just for fun set needsHack to false,
@@ -2428,7 +2440,7 @@ angular.module('pokowaka.ng-infinite-iscroll', []).
           if (needsHack) {
             // We will force you to update the dom!
             element[0].removeChild(element[0].appendChild(document.createElement('style')));
-          } 
+          }
 
 
           var old = outstanding;
@@ -2451,33 +2463,19 @@ angular.module('pokowaka.ng-infinite-iscroll', []).
 
 
       // Used to get the template ready.
-      var loadTemplate = function() {
+      var loadTemplate = function(template, templateUrl) {
         var deferred = $q.defer();
-        if (!angular.isUndefined(scope.rowTemplate)) {
-          deferred.resolve($compile(scope.rowTemplate));
-        }
-        if (!angular.isUndefined(scope.rowTemplateUrl)) {
-          $http.get(scope.rowTemplateUrl, {cache: $templateCache}).success(function(html) {
+        if (!angular.isUndefined(template)) {
+          deferred.resolve($compile(template));
+        } else if (!angular.isUndefined(templateUrl)) {
+          $http.get(templateUrl, {cache: $templateCache}).success(function(html) {
             deferred.resolve($compile(html));
           }).error(function() {
             deferred.reject();
           });
-        }
-        return deferred.promise;
-      };
-
-      // Used to get the template ready.
-      var loadHeaderTemplate = function() {
-        var deferred = $q.defer();
-        if (!angular.isUndefined(scope.headerTemplate)) {
-          deferred.resolve($compile(scope.headerTemplate));
-        }
-        if (!angular.isUndefined(scope.headerTemplateUrl)) {
-          $http.get(scope.headerTemplateUrl, {cache: $templateCache}).success(function(html) {
-            deferred.resolve($compile(html));
-          }).error(function() {
-            deferred.reject();
-          });
+        } else {
+          // I guess there's no template...
+          deferred.resolve(null);
         }
         return deferred.promise;
       };
@@ -2485,11 +2483,12 @@ angular.module('pokowaka.ng-infinite-iscroll', []).
 
       // Okay, we now load the first rows of data..
       // as soon as we get this we can construct our iScroll component.
-      loadTemplate().then(function(template) {
-        row = template;
-        return loadHeaderTemplate();
-      }).then(function(template) {
-        header = template;
+      $q.all( [
+        loadTemplate(scope.rowTemplate, scope.rowTemplateUrl),
+        loadTemplate(scope.headerTemplate, scope.headerTemplateUrl)
+      ]).then(function(templates) {
+        row  = templates[0];
+        header = templates[1];
         return scope.requestData(0, 20);
       }).then(function(res) {
           // We can now setup the IScroll component..
@@ -2501,10 +2500,14 @@ angular.module('pokowaka.ng-infinite-iscroll', []).
           scroller.append(ul);
 
           //  Groupby headers..
-          createRow(ul, 'header');
-          for(var i = 0; i < res.items.length && i < 50; i++) {
-            createRow(ul, 'row', res.items[i]);
+          if (header != null) {
+            createRow(ul, 'header');
           }
+          for(var i = 0; i < 50; i++) {
+            createRow(ul, 'row', i < res.items.length ? res.items[i] : undefined);
+          }
+
+          // Let's configure iScroll
           var scrollDiv = element.children();
           scrollDiv.attr('id', 'wr-' +  counterService.next());
 
@@ -2529,184 +2532,14 @@ angular.module('pokowaka.ng-infinite-iscroll', []).
           if (!angular.isUndefined(scope.refresh)) {
             var lst = scope.refresh.split(',');
             for(var j = 0; j < lst.length; j++) {
-              scope.$parent.$watch(lst[j].trim(), function() {
-                requestData(lstStart, cacheSize);
+              scope.$parent.$watch(lst[j].trim(), function(oldValue, newValue) {
+                if (oldValue != newValue) {
+                  requestData(lstStart, cacheSize);
+                }
               });
             }
           }
         });
-    }
-  };
-})
-.directive('infiniteList', function($compile, $http, $q, $templateCache, counterService) {
-  return {
-    restrict: 'E',
-    template: '<div class="infinite-list-wrapper"><div class="infinite-list-scroller"></div></div>',
-    scope          : {
-      requestData    : '=requestData',
-      rowTemplate    : '=rowTemplate',
-      rowTemplateUrl : '=rowTemplateUrl',
-      refresh        : '=refresh',
-      cacheSize      : '=cacheSize',
-      options        : '=options',
-    },
-    link: function link(scope, element) {
-      var needsHack = false;
-      // Well, it turns out that the iOS webkit will not redraw the dom, even though
-      // we have been messing around with it. 
-      if( /iPhone|iPad|iPod/i.test(navigator.userAgent) ) {
-        needsHack = true;
-      }
-      var cacheSize = angular.isUndefined(scope.cacheSize) ? 1000 : scope.cacheSize;
-      var iScroll = null, lstStart = 0, row = null;
-      var scopeMap = {};
-      var createRow = function(ul, data) {
-
-        var id = 'llx-' + counterService.next(),
-        el = angular.element('<li class="llxrow" id="' + id + '"/>'),
-        newScope = scope.$new(true);
-
-        // Keep track of which row has which scope..
-        // (We need this as $(el).scope() doesn't work..
-        scopeMap[id] = newScope;
-
-        ul.append(el);
-        newScope.item = data;
-        row(newScope, function(cloned) {
-          el.append(cloned);
-        });
-
-        if (scope.$root.$$phase != '$apply' && scope.$root.$$phase != '$digest') {
-          newScope.$apply();
-        }
-      };
-
-      // iScroll will call this to actually render the data
-      var updateContent = function(el, data) {
-        var id = angular.element(el).attr('id'), sc = scopeMap[id];
-        sc.item = data;
-
-        // Apply as we are likely outside a digest cycle.
-        if (sc.$root.$$phase != '$apply' && sc.$root.$$phase != '$digest') {
-          sc.$apply();
-        }
-      };
-
-      //  Contains the outstanding request, basically this is a queue of length one
-      //  if this thing is null, there are no active requests. 
-      //  if a new request comes in we simply overwrite this var, and call ourselves
-      //  again if the outstanding request doesn't look like the on just completed.
-      var outstanding = null;
-
-      var requestData = function(start, count) {
-        // We use this to drop intermediate requests if there are any outstanding.
-        if (outstanding !== null) {
-            outstanding = {start : start, count : count };
-            return;
-        }
-        outstanding = {start : start, count : count };
-
-        lstStart = start;
-        scope.requestData(start, count).then(function(res) {
-          if (res.limits !== iScroll.options.infiniteLimit) {
-            iScroll.options.infiniteLimit = res.total;
-          }
-
-          iScroll.updateCache(start, res.items);
-          iScroll.updateContent();
-          iScroll.refresh();
-
-          // Oh really?!? Webkit mobile you're not willing to redraw?
-          // (Just for fun set needsHack to false,
-          // connect to your iPad and use the safari developer console and see how the
-          // dom looks right, but your display does not
-          if (needsHack) {
-            // We will force you to update the dom!
-            element[0].removeChild(element[0].appendChild(document.createElement('style')));
-          } 
-          var old = outstanding;
-          outstanding = null;
-
-          // Check if there is a new outstanding request, if so process it.
-          if (old.start !== start || old.count !== count) {
-            requestData(old.start, old.count);
-          }
-        }, function() {
-          var old = outstanding;
-          outstanding = null;
-
-          // Check if there is a new outstanding request, if so process it.
-          if (old.start !== start || old.count !== count) {
-            requestData(old.start, old.count);
-          }
-        });
-      };
-
-
-      // Used to get the template ready.
-      var loadTemplate = function() {
-        var deferred = $q.defer();
-        if (!angular.isUndefined(scope.rowTemplate)) {
-          deferred.resolve($compile(scope.rowTemplate));
-        }
-        if (!angular.isUndefined(scope.rowTemplateUrl)) {
-          $http.get(scope.rowTemplateUrl, {cache: $templateCache}).success(function(html) {
-            deferred.resolve($compile(html));
-          }).error(function() {
-            deferred.reject();
-          });
-        }
-        return deferred.promise;
-      };
-
-
-
-      // Okay, we now load the first rows of data..
-      // as soon as we get this we can construct our iScroll component.
-      loadTemplate().then(function(template) {
-        row = template;
-        scope.requestData(0, 50).then(function(res) {
-          // We can now setup the IScroll component..
-          // First we need the initial visible elements.
-          // For now we will use 50 elements.
-          // TODO(ErwinJ): In the future be smart and do 3x the view or something like that.
-          var ul = angular.element("<ul/>");
-          var scroller = element.children().children();
-          scroller.append(ul);
-          for(var i = 0; i < res.items.length && i < 50; i++) {
-            createRow(ul, res.items[i]);
-          }
-          var scrollDiv = element.children();
-          scrollDiv.attr('id', 'wr-' +  counterService.next());
-
-          var scrolloptions = {
-            mouseWheel            : true,
-            scrollbars            : true,
-            interactiveScrollbars : true,
-          };
-          if (!angular.isUndefined(scope.options)) {
-              scrolloptions = angular.isString(scope.options) ? JSON.parse(scope.options) : scope.options;
-          }
-
-          scrolloptions.infiniteElements      = scroller.children().children(),
-          scrolloptions.infiniteLimit         = res.total,
-          scrolloptions.dataset               = requestData,
-          scrolloptions.dataFiller            = updateContent,
-          scrolloptions.cacheSize             = cacheSize;
-          iScroll = new IScroll(scrollDiv[0], scrolloptions);
-
-
-          // Hookup refresh observers.
-          if (!angular.isUndefined(scope.refresh)) {
-            var lst = scope.refresh.split(',');
-            for(var j = 0; j < lst.length; j++) {
-              scope.$parent.$watch(lst[j].trim(), function() {
-                requestData(lstStart, cacheSize);
-              });
-            }
-          }
-        });
-      });
     }
   };
 });
