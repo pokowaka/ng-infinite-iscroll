@@ -1731,30 +1731,33 @@ IScroll.prototype = {
       // Phase will have a value from [0,this.infiniteLength>
       // and is used to push elements to the bottom.
 
-    var top = 0;
-    var i = 0;
+    var top = 0, i = 0, idx;
     var update = [];
-    var maxPhase = this.options.infiniteLimit + (this.groupBy ? this.groupBy.length : 0);
 
+    var maxPhase = this.options.infiniteLimit + (this.groupBy ? this.groupBy.length : 0);
     var cachePhase = Math.floor( (minorPhase - Math.abs(this.headerIndexOf(minorPhase))) / this.infiniteCacheBuffer);
 
     //console.log("y: " + this.y +  ", minorPhase: " + minorPhase + ", majorPhase: " + majorPhase + ", phase: " + phase + ", cachePhase: " + cachePhase + ', infLength: ' + this.infiniteLength);
     while ( i < this.infiniteLength ) {
       // Top contains the highest element..
       //top = i * this.infiniteElementHeight +  majorPhase * this.infiniteHeight;
+      idx = i + majorPhase * this.infiniteLength;
 
+      // Check if this element is out of reach, and should just be moved offscreen..
       if ( phase > i ) {
         // Push this element to the end of visible spectrum
         // this li will be moved to the end.
-        top = this.translateIdxToY(this.infiniteLength + i + majorPhase * this.infiniteLength);
-      } else {
-        top = this.translateIdxToY(i + majorPhase * this.infiniteLength);
+        idx += this.infiniteLength;
       }
+      // Wow, this idx is clearly out of range, push it offscreen..
+      if (idx >= maxPhase) {
+        idx = -idx;
+      }
+      top = this.translateIdxToY(idx);
 
       if ( this.infiniteElements[i]._top !== top ) {
         // _phase contains the index of the element to display.
-        var elm = this.translateYToIdx(-top);
-        this.infiniteElements[i]._phase = elm;
+        this.infiniteElements[i]._phase = idx;
 
         if ( this.infiniteElements[i]._phase < maxPhase ) {
           this.infiniteElements[i]._top = top;
@@ -2422,8 +2425,7 @@ angular.module('pokowaka.ng-infinite-iscroll', []).
             // We need to refresh twice due to an iScroll issue.
             // iScroll.y does not get updated until the end of the refresh call.
             // iScroll.y changes since the number of elements changes.
-            // Unfortunately we have calculated the position of all the elements before this
-            // call. So for now we just do this twice.
+            // by that point all the content has been recalculated already.
             iScroll.refresh();
           }
 
