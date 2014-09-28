@@ -23,7 +23,7 @@
           <i  class="fa fa-spinner fa-spin"></i>
         </small>
       </h3>
-      <div style="position: relative; width: 150px; height: 300px;"> 
+      <div style="position: relative; width: 150px; height: 300px;">
 
         <!-- Notice the ' around the template! -->
         <infinite-list request-data="getData" row-template="'<p>[{{item}}]</p>'" options="iscrollOptions" />
@@ -36,11 +36,28 @@
           <i  class="fa fa-spinner fa-spin"></i>
         </small>
       </h3>
-      <div style="position: relative; width: 200px; height: 300px;"> 
+      <div style="position: relative; width: 200px; height: 300px;">
         <!-- Notice the ' around the template! -->
-         <infinite-group-by-list request-data="getGroupData" header-template="'<H1><b>{{item}}!</b></H1>'" row-template="'<p>[{{item}}]</p>'" options="iscrollOptions" />   
+        <infinite-list request-data="getGroupData" header-template="'<H1><b>{{item}}!</b></H1>'" row-template="'<p>[{{item}}]</p>'" options="iscrollOptions" />
+      </div>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-xs-6">
+      <h3> Let's scroll {{set.size}} elements and watch for changes
+      </h3>
+      <p>You can also observe a set of properties that force the scrollview to request the data once again.</p>
+      <p>This can be useful of your queries change what they are returning</p>
+      <div class="row">
+        <a ng-click="setSize(10000)" class="btn btn-default" role="button">Large set</a>
+        <a ng-click="setSize(4)" class="btn btn-default" role="button">Small set</a>
+        <a ng-click="setToggle()" class="btn btn-default" role="button">Change order</a>
+      </div>
+      <div style="position: relative; width: 150px; height: 300px;">
+
+        <!-- Notice the ' around the template! -->
+        <infinite-list request-data="getSetData" row-template="'<p>[{{item}}]</p>'" options="iscrollOptions" refresh="'set.size, set.order'"  />
       </div>
     </div>
   </div>
 </div>
-
