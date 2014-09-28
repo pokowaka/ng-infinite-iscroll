@@ -2419,10 +2419,17 @@ angular.module('pokowaka.ng-infinite-iscroll', []).
           iScroll.updateCache(res.limits.begin, res.items, res.groupBy);
           if (res.limits.total !== iScroll.options.infiniteLimit) {
             iScroll.options.infiniteLimit = res.limits.total;
+            // We need to refresh twice due to an iScroll issue.
+            // iScroll.y does not get updated until the end of the refresh call.
+            // iScroll.y changes since the number of elements changes.
+            // Unfortunately we have calculated the position of all the elements before this
+            // call. So for now we just do this twice.
+            iScroll.refresh();
           }
 
           iScroll.refresh();
           iScroll.updateContent();
+
 
           // Oh really?!? Webkit mobile you're not willing to redraw?
           // (Just for fun set needsHack to false,

@@ -65,7 +65,7 @@ angular.module('myApp').controller('HomeCtrl', function($scope, $timeout, $q) {
     return def.promise;
   };
 
-  $scope.set = { size : 25, order : true };
+  $scope.set = { size : 4, order : true };
   $scope.setSize= function(size) {
     $scope.set.size = size;
   };
