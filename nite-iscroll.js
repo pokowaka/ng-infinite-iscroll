@@ -2419,7 +2419,7 @@ angular.module('pokowaka.ng-infinite-iscroll', []).
 
         lstStart = start;
         scope.requestData(start, count).then(function(res) {
-          iScroll.updateCache(res.limits.begin, res.items, res.groupBy);
+          iScroll.updateCache(res.limits.start, res.items, res.groupBy);
           if (res.limits.total !== iScroll.options.infiniteLimit) {
             iScroll.options.infiniteLimit = res.limits.total;
             // We need to refresh twice due to an iScroll issue.

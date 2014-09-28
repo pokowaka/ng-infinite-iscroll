@@ -25,7 +25,7 @@ Now in your controller you need a function that fetches the data:
     // This is the actual data format we need to return..
     var data = {
       limits {
-        begin : offset,
+        start : offset,
         end   : offset + size,
         total : 10000
       },
@@ -53,6 +53,7 @@ example:
 
 
 ***Note! Your template should have a fixed height! Otherwise the scroller will not work!*** 
+***Note! Your template will be called with scope.item === undefined in case the item is not yet retrieved*** 
 
 Now you might have a scenario where you would like to show data that is
 grouped, and want to have a Grouped By header introduced in between the
@@ -70,7 +71,7 @@ well. For example:
     // This is the actual data format we need to return..
     var data = {
       limits {
-        begin : offset,
+        start : offset,
         end   : offset + size,
         total : 10000
       },
