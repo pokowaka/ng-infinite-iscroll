@@ -20,7 +20,7 @@ angular.module('myApp').controller('HomeCtrl', function($scope, $timeout, $q) {
        var data = {
          limits: {
            total : $scope.total,
-           begin : offset,
+           start : offset,
            end   : offset + size,
          },
          items : []
@@ -58,7 +58,7 @@ angular.module('myApp').controller('HomeCtrl', function($scope, $timeout, $q) {
        for(var i = offset; i < offset + size; i++) {
          data.items.push('Element: ' + i);
        }
-       data.limits = { begin : offset, end : offset + size} ;
+       data.limits = { start : offset, end : offset + size} ;
        $scope.grloading = false;
        def.resolve(data);
      }, 2000);
@@ -76,18 +76,18 @@ angular.module('myApp').controller('HomeCtrl', function($scope, $timeout, $q) {
     var items = {
       limits : {
         total : $scope.set.size,
-        begin : offset > $scope.set.size ? 0 : offset,
+        start : offset > $scope.set.size ? 0 : offset,
         end   : Math.min(offset + size, $scope.set.size)
       },
       items : []
     };
     var def = $q.defer();
     if ($scope.set.order)  {
-      for (var i = items.limits.begin; i < items.limits.end; i++) {
+      for (var i = items.limits.start; i < items.limits.end; i++) {
         items.items.push('item : ' + i);
       }
     } else {
-      for (var i = items.limits.end-1; i >= items.limits.begin; i--) {
+      for (var i = items.limits.end-1; i >= items.limits.start; i--) {
         items.items.push('item : ' + i);
       }
     }
